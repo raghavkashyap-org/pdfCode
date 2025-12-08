@@ -50,9 +50,22 @@
             justify-content: space-between;
             padding: 0 20px;
             flex-shrink: 0;
+            z-index: 60; /* Ensure header stays on top */
+            position: relative;
         }
 
-        .logo { font-weight: 700; font-size: 1.1rem; color: white; }
+        /* NEW: Menu Toggle Button Styles */
+        .menu-btn {
+            display: none; /* Hidden on desktop */
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 5px;
+            margin-right: 15px;
+        }
+
+        .logo { font-weight: 700; font-size: 1.1rem; color: white; display: flex; align-items: center; }
         .logo span { color: var(--primary); }
 
         .actions button {
@@ -71,7 +84,18 @@
         .actions button:hover { background: var(--primary-hover); }
 
         /* --- Workspace --- */
-        .workspace { display: flex; flex: 1; overflow: hidden; }
+        .workspace { display: flex; flex: 1; overflow: hidden; position: relative; }
+
+        /* NEW: Overlay for Mobile */
+        .overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 40;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
 
         /* --- Sidebar --- */
         .sidebar {
@@ -84,6 +108,8 @@
             gap: 15px;
             overflow-y: auto;
             flex-shrink: 0;
+            transition: transform 0.3s ease;
+            z-index: 50;
         }
 
         .control-group { display: flex; flex-direction: column; gap: 6px; }
@@ -282,6 +308,35 @@
             border: 0;
         }
 
+        /* --- NEW: MOBILE RESPONSIVE STYLES --- */
+        @media screen and (max-width: 900px) {
+            /* Show Hamburger */
+            .menu-btn { display: block; }
+            
+            /* Sidebar becomes Drawer */
+            .sidebar {
+                position: absolute;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: 85%;
+                max-width: 320px;
+                transform: translateX(-100%); /* Hidden by default */
+                box-shadow: 4px 0 15px rgba(0,0,0,0.5);
+            }
+            .sidebar.active { transform: translateX(0); }
+
+            /* Overlay Active State */
+            .overlay.active { display: block; opacity: 1; }
+
+            /* Reduce padding for mobile preview */
+            .preview-pane { padding: 10px; }
+            #pdf-content { width: 100%; min-height: 400px; }
+            
+            /* Hide print text on very small screens to save header space */
+            .actions button .text { display: none; }
+        }
+
         /* --- 🖨️ PRINT STYLES FIXED --- */
         @media print {
             /* 1. Hides default Browser Headers/Footers */
@@ -297,7 +352,8 @@
                 background: white !important; 
             }
 
-            header, .sidebar { display: none !important; }
+            /* Hide Sidebar, Header, and Overlay */
+            header, .sidebar, .menu-btn, .overlay { display: none !important; }
             
             .workspace, .preview-pane { 
                 display: block !important; 
@@ -337,14 +393,27 @@
 <body>
 
     <header>
+        <button id="menuToggle" class="menu-btn" aria-label="Toggle Menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+
         <div class="logo">⚡ Code<span>Print</span> Studio</div>
         <div class="actions">
-            <button onclick="window.print()">🖨️ Print PDF</button>
+            <button onclick="window.print()">
+                <span>🖨️</span>
+                <span class="text">Print PDF</span>
+            </button>
         </div>
     </header>
 
     <div class="workspace">
-        <aside class="sidebar">
+        <div id="sidebarOverlay" class="overlay"></div>
+
+        <aside class="sidebar" id="mainSidebar">
             <div class="control-group">
                 <label>Converter Mode</label>
                 <div class="mode-toggle">
@@ -475,7 +544,12 @@
             mdControls: document.getElementById('mdControls'),
             inputLabel: document.getElementById('inputLabel'),
             btnCode: document.getElementById('btnCode'),
-            btnMD: document.getElementById('btnMD')
+            btnMD: document.getElementById('btnMD'),
+
+            // NEW: Mobile Elements
+            sidebar: document.getElementById('mainSidebar'),
+            menuBtn: document.getElementById('menuToggle'),
+            overlay: document.getElementById('sidebarOverlay')
         };
 
         const escapeHtml = (str) => str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -653,9 +727,23 @@
             updateTheme();
         }
 
+        // --- NEW: Mobile Toggle Functions ---
+        function toggleMenu() {
+            els.sidebar.classList.toggle('active');
+            els.overlay.classList.toggle('active');
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             updateTheme();
             renderContent();
+
+            // NEW: Add Event Listeners for Mobile Menu
+            if(els.menuBtn) {
+                els.menuBtn.addEventListener('click', toggleMenu);
+            }
+            if(els.overlay) {
+                els.overlay.addEventListener('click', toggleMenu);
+            }
         });
     </script>
 </body>
