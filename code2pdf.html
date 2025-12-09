@@ -1,2 +1,750 @@
-.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code & MD to PDF Studio</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <link id="highlight-theme" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
 
+    <style>
+        :root {
+            --bg-app: #0f172a;
+            --bg-panel: #1e293b;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            
+            /* NEW: Variable for dynamic margin */
+            --print-margin: 20mm; 
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Header --- */
+        header {
+            height: 50px;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            flex-shrink: 0;
+            z-index: 60; /* Ensure header stays on top */
+            position: relative;
+        }
+
+        /* NEW: Menu Toggle Button Styles */
+        .menu-btn {
+            display: none; /* Hidden on desktop */
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 5px;
+            margin-right: 15px;
+        }
+
+        .logo { font-weight: 700; font-size: 1.1rem; color: white; display: flex; align-items: center; }
+        .logo span { color: var(--primary); }
+
+        .actions button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .actions button:hover { background: var(--primary-hover); }
+
+        /* --- Workspace --- */
+        .workspace { display: flex; flex: 1; overflow: hidden; position: relative; }
+
+        /* NEW: Overlay for Mobile */
+        .overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 40;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 350px;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            gap: 15px;
+            overflow-y: auto;
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+            z-index: 50;
+        }
+
+        .control-group { display: flex; flex-direction: column; gap: 6px; }
+        label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+
+        input, select, textarea {
+            background: var(--bg-app);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: inherit;
+            outline: none;
+            font-size: 0.9rem;
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+
+        /* Modified Range Wrapper for Number Input */
+        .range-wrapper { display: flex; align-items: center; gap: 10px; }
+        .range-value { font-size: 0.8rem; color: var(--text-muted); width: 40px; text-align: right;}
+        
+        /* Small number input styling */
+        .num-input {
+            width: 60px;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            text-align: right;
+        }
+
+        textarea {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            flex: 1;
+            min-height: 200px;
+            resize: none;
+            line-height: 1.4;
+        }
+
+        /* Mode Switcher Buttons */
+        .mode-toggle {
+            display: flex;
+            background: var(--bg-app);
+            padding: 4px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        .mode-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .mode-btn.active {
+            background: var(--bg-panel);
+            color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        /* --- Preview --- */
+        .preview-pane {
+            flex: 1;
+            background: #0f172a;
+            background-image: radial-gradient(#334155 1px, transparent 1px);
+            background-size: 20px 20px;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            overflow-y: auto;
+        }
+
+        #pdf-content {
+            background: white;
+            width: 210mm; /* A4 width */
+            min-height: 297mm; /* A4 height */
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            height: auto; 
+            /* UPDATED: Use variable for padding instead of margin inside content */
+            padding: var(--print-margin);
+            transition: padding 0.1s ease;
+        }
+
+        /* Window Header */
+        .window-frame {
+            background: #282c34;
+            padding: 10px 15px;
+            border-bottom: 1px solid #1b1f23;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            
+            /* Negative margin to pull header to edges over the padding */
+            margin: calc(var(--print-margin) * -1) calc(var(--print-margin) * -1) 0 calc(var(--print-margin) * -1);
+            margin-bottom: 20px;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .dots { display: flex; gap: 6px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot.red { background: #ff5f56; }
+        .dot.yellow { background: #ffbd2e; }
+        .dot.green { background: #27c93f; }
+
+        .window-title {
+            color: #9aa0a6;
+            font-size: 11px;
+            font-family: sans-serif;
+            font-weight: 500;
+        }
+
+        /* Content Container */
+        .content-container {
+            /* Remove fixed padding, let the parent padding handle it */
+            padding: 0; 
+            margin: 0;
+            overflow: hidden;
+            flex: 1;
+            color: #333;
+        }
+
+        /* CODE MODE STYLES */
+        .line-wrapper { display: flex; align-items: baseline; width: 100%; }
+        .line-num {
+            user-select: none;
+            text-align: right;
+            min-width: 35px;
+            padding-right: 15px;
+            margin-right: 10px;
+            color: #495162;
+            border-right: 1px solid #3e4451;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.3;
+        }
+        pre.code-block { margin: 0; padding: 0; white-space: pre-wrap; word-break: break-all; flex: 1; }
+        code.raw-code {
+            font-family: 'JetBrains Mono', monospace;
+            background: transparent !important;
+            display: block;
+            font-size: 13px;
+            line-height: 1.3;
+            padding: 0 !important;
+        }
+
+        /* MARKDOWN MODE STYLES */
+        .markdown-body {
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #24292e; /* Light theme text default */
+        }
+        
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 { 
+            margin-top: 24px; margin-bottom: 16px; font-weight: 600; line-height: 1.25; 
+        }
+        .markdown-body h1 { font-size: 2em; border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+        .markdown-body h2 { font-size: 1.5em; border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+        .markdown-body p { margin-bottom: 16px; }
+        .markdown-body ul, .markdown-body ol { padding-left: 2em; margin-bottom: 16px; }
+        .markdown-body blockquote { 
+            margin: 0; padding: 0 1em; color: #6a737d; border-left: 0.25em solid #dfe2e5; margin-bottom: 16px; 
+        }
+        /* Code inside Markdown */
+        .markdown-body pre {
+            padding: 16px;
+            overflow: auto;
+            font-size: 85%;
+            line-height: 1.45;
+            background-color: #f6f8fa;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+        .markdown-body code {
+            font-family: 'JetBrains Mono', monospace;
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            background-color: rgba(27,31,35,0.05);
+            border-radius: 3px;
+        }
+        .markdown-body pre code {
+            padding: 0;
+            margin: 0;
+            font-size: 100%;
+            word-break: normal;
+            white-space: pre;
+            background: transparent;
+            border: 0;
+        }
+
+        /* --- NEW: MOBILE RESPONSIVE STYLES --- */
+        @media screen and (max-width: 900px) {
+            /* Show Hamburger */
+            .menu-btn { display: block; }
+            
+            /* Sidebar becomes Drawer */
+            .sidebar {
+                position: absolute;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: 85%;
+                max-width: 320px;
+                transform: translateX(-100%); /* Hidden by default */
+                box-shadow: 4px 0 15px rgba(0,0,0,0.5);
+            }
+            .sidebar.active { transform: translateX(0); }
+
+            /* Overlay Active State */
+            .overlay.active { display: block; opacity: 1; }
+
+            /* Reduce padding for mobile preview */
+            .preview-pane { padding: 10px; }
+            #pdf-content { width: 100%; min-height: 400px; }
+            
+            /* Hide print text on very small screens to save header space */
+            .actions button .text { display: none; }
+        }
+
+        /* --- 🖨️ PRINT STYLES FIXED --- */
+        @media print {
+            /* 1. Hides default Browser Headers/Footers */
+            @page {
+                margin: 0; 
+                size: auto;
+            }
+
+            body { 
+                height: auto !important; 
+                overflow: visible !important; 
+                display: block !important; 
+                background: white !important; 
+            }
+
+            /* Hide Sidebar, Header, and Overlay */
+            header, .sidebar, .menu-btn, .overlay { display: none !important; }
+            
+            .workspace, .preview-pane { 
+                display: block !important; 
+                padding: 0 !important; 
+                height: auto !important; 
+                overflow: visible !important; 
+                background: white !important; 
+                margin: 0 !important; 
+            }
+
+            #pdf-content { 
+                width: 100% !important; 
+                min-height: 0 !important; 
+                height: auto !important; 
+                box-shadow: none !important; 
+                border: none !important; 
+                display: block !important; 
+                
+                /* 2. Use the CSS Variable for padding to act as Margin */
+                padding: var(--print-margin) !important;
+                margin: 0 !important; 
+            }
+
+            /* Adjust header in print to ignore the padding/margin logic and sit top flush if needed, 
+               or keep logic to show "window" effect */
+            .window-frame {
+                margin: calc(var(--print-margin) * -1) calc(var(--print-margin) * -1) 20px calc(var(--print-margin) * -1) !important;
+            }
+
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            
+            .line-wrapper, .markdown-body h1, .markdown-body h2 { page-break-inside: avoid; }
+            .markdown-body pre { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <button id="menuToggle" class="menu-btn" aria-label="Toggle Menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+
+        <div class="logo">⚡ Code<span>Print</span> Studio</div>
+        <div class="actions">
+            <button onclick="window.print()">
+                <span>🖨️</span>
+                <span class="text">Print PDF</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="workspace">
+        <div id="sidebarOverlay" class="overlay"></div>
+
+        <aside class="sidebar" id="mainSidebar">
+            <div class="control-group">
+                <label>Converter Mode</label>
+                <div class="mode-toggle">
+                    <button class="mode-btn active" id="btnCode" onclick="setMode('code')">Code</button>
+                    <button class="mode-btn" id="btnMD" onclick="setMode('markdown')">Markdown</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>File Name</label>
+                <input type="text" id="filename" value="script.js" oninput="updateUI()">
+            </div>
+
+            <div class="control-group">
+                <label>Page Margin (mm)</label>
+                <div class="range-wrapper">
+                    <input type="range" id="marginSlider" min="0" max="80" value="20" oninput="updateMargin(this.value)">
+                    <input type="number" id="marginInput" class="num-input" min="0" max="80" value="20" oninput="updateMargin(this.value)">
+                </div>
+            </div>
+
+            <div id="codeControls">
+                <div class="control-group">
+                    <label>Language</label>
+                    <select id="language" onchange="renderContent()">
+                        <option value="javascript">JavaScript</option>
+                        <option value="python">Python</option>
+                        <option value="html">HTML</option>
+                        <option value="css">CSS</option>
+                        <option value="java">Java</option>
+                        <option value="cpp">C++</option>
+                        <option value="json">JSON</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Line Spacing</label>
+                    <div class="range-wrapper">
+                        <input type="range" id="lineHeight" min="1.0" max="2.0" value="1.3" step="0.1" oninput="updateUI()">
+                        <span class="range-value" id="lineHeightVal">1.3</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="mdControls" style="display: none;">
+                <div class="control-group">
+                    <label>Input Markdown Syntax</label>
+                    <select id="mdSyntax" onchange="renderContent()">
+                        <option value="github">GitHub Flavored (default)</option>
+                        <option value="strict">Strict / CommonMark</option>
+                        <option value="none">None (Plain Text)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Theme</label>
+                <select id="theme" onchange="updateTheme()">
+                    <optgroup label="Dark">
+                        <option value="atom-one-dark" selected>Atom One Dark</option>
+                        <option value="github-dark">GitHub Dark</option>
+                        <option value="monokai">Monokai</option>
+                        <option value="nord">Nord</option>
+                    </optgroup>
+                    <optgroup label="Light">
+                        <option value="github">GitHub Light</option>
+                        <option value="atom-one-light">Atom One Light</option>
+                        <option value="vs">Visual Studio</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Font Size</label>
+                <div class="range-wrapper">
+                    <input type="range" id="fontSize" min="10" max="24" value="13" step="1" oninput="updateUI()">
+                    <span class="range-value" id="fontSizeVal">13px</span>
+                </div>
+            </div>
+
+            <div class="control-group" style="flex:1;">
+                <label id="inputLabel">Source Code</label>
+                <textarea id="codeInput" spellcheck="false" oninput="renderContent()">function hello() {
+    console.log("Hello World");
+}</textarea>
+            </div>
+        </aside>
+
+        <main class="preview-pane">
+            <div id="pdf-content">
+                <div class="window-frame" id="windowFrame">
+                    <div class="dots">
+                        <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+                    </div>
+                    <div class="window-title" id="previewTitle">script.js</div>
+                    <div style="width:40px;"></div>
+                </div>
+                <div class="content-container" id="contentContainer">
+                    </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // State
+        let currentMode = 'code'; 
+
+        const els = {
+            input: document.getElementById('codeInput'),
+            container: document.getElementById('contentContainer'),
+            lang: document.getElementById('language'),
+            themeLink: document.getElementById('highlight-theme'),
+            themeSelect: document.getElementById('theme'),
+            titleInput: document.getElementById('filename'),
+            titleDisplay: document.getElementById('previewTitle'),
+            fontSizeInput: document.getElementById('fontSize'),
+            fontSizeVal: document.getElementById('fontSizeVal'),
+            lineHeightInput: document.getElementById('lineHeight'),
+            lineHeightVal: document.getElementById('lineHeightVal'),
+            windowFrame: document.getElementById('windowFrame'),
+            pdfContent: document.getElementById('pdf-content'),
+            mdSyntax: document.getElementById('mdSyntax'),
+            // Margin Controls
+            marginSlider: document.getElementById('marginSlider'),
+            marginInput: document.getElementById('marginInput'),
+            
+            // Sections
+            codeControls: document.getElementById('codeControls'),
+            mdControls: document.getElementById('mdControls'),
+            inputLabel: document.getElementById('inputLabel'),
+            btnCode: document.getElementById('btnCode'),
+            btnMD: document.getElementById('btnMD'),
+
+            // NEW: Mobile Elements
+            sidebar: document.getElementById('mainSidebar'),
+            menuBtn: document.getElementById('menuToggle'),
+            overlay: document.getElementById('sidebarOverlay')
+        };
+
+        const escapeHtml = (str) => str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+        // --- NEW: Update Margin Function ---
+        function updateMargin(val) {
+            // Keep bounds
+            let v = parseInt(val);
+            if(v < 0) v = 0;
+            if(v > 100) v = 100;
+            
+            // Sync Inputs
+            els.marginSlider.value = v;
+            els.marginInput.value = v;
+
+            // Update CSS Variable
+            document.documentElement.style.setProperty('--print-margin', v + 'mm');
+        }
+
+        // --- 1. Mode Switching ---
+        function setMode(mode) {
+            currentMode = mode;
+            
+            if (mode === 'code') {
+                els.btnCode.classList.add('active');
+                els.btnMD.classList.remove('active');
+                els.codeControls.style.display = 'block';
+                els.mdControls.style.display = 'none';
+                els.inputLabel.textContent = 'Source Code';
+                if(els.input.value.includes('# Markdown')) els.input.value = `// Switched to Code Mode\nconsole.log("Ready");`;
+                els.titleInput.value = "script.js";
+            } else {
+                els.btnCode.classList.remove('active');
+                els.btnMD.classList.add('active');
+                els.codeControls.style.display = 'none';
+                els.mdControls.style.display = 'block';
+                els.inputLabel.textContent = 'Markdown Text';
+                if(els.input.value.includes('console.log')) els.input.value = `# Markdown Title\n\nThis is a **bold** statement.\n\n- List item 1\n- List item 2\n\n\`\`\`javascript\nconsole.log("Code inside MD");\n\`\`\``;
+                els.titleInput.value = "README.md";
+            }
+            updateUI();
+            renderContent();
+        }
+
+        // --- 2. Rendering ---
+        function renderContent() {
+            const content = els.input.value || " ";
+            els.container.innerHTML = '';
+
+            if (currentMode === 'code') {
+                renderRawCode(content);
+            } else {
+                renderMarkdown(content);
+            }
+            updateUI(); // Re-apply font sizes
+        }
+
+        function renderRawCode(code) {
+            const lines = code.split('\n');
+            const lang = els.lang.value;
+
+            lines.forEach((line, index) => {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'line-wrapper';
+
+                const num = document.createElement('div');
+                num.className = 'line-num';
+                num.textContent = index + 1;
+
+                const pre = document.createElement('pre');
+                pre.className = 'code-block';
+                const codeEl = document.createElement('code');
+                codeEl.className = `raw-code language-${lang}`;
+                codeEl.innerHTML = escapeHtml(line || ' '); 
+
+                pre.appendChild(codeEl);
+                lineDiv.appendChild(num);
+                lineDiv.appendChild(pre);
+                els.container.appendChild(lineDiv);
+            });
+            
+            // Highlight
+            els.container.querySelectorAll('code').forEach(hljs.highlightElement);
+        }
+
+        function renderMarkdown(markdownText) {
+            if (typeof marked === 'undefined') {
+                els.container.innerHTML = "<p style='color:red;'>Error: Marked.js library not loaded. Check internet connection.</p>";
+                return;
+            }
+
+            const syntax = els.mdSyntax.value;
+            
+            let markedOptions = {
+                breaks: true,
+                gfm: true
+            };
+
+            if (syntax === 'strict') {
+                markedOptions.gfm = false;
+            } else if (syntax === 'none') {
+                els.container.innerHTML = `<pre style="white-space:pre-wrap; font-family:inherit;">${escapeHtml(markdownText)}</pre>`;
+                return;
+            }
+
+            // Enable highlighting inside Markdown blocks (Marked 4.x - 9.x Syntax)
+            marked.setOptions({
+                ...markedOptions,
+                highlight: function(code, lang) {
+                    const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                    return hljs.highlight(code, { language }).value;
+                }
+            });
+
+            const html = marked.parse(markdownText);
+            const wrapper = document.createElement('div');
+            wrapper.className = 'markdown-body';
+            wrapper.innerHTML = html;
+            els.container.appendChild(wrapper);
+        }
+
+        // --- 3. UI Updates & Theme ---
+        function updateTheme() {
+            const theme = els.themeSelect.value;
+            els.themeLink.href = `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/${theme}.min.css`;
+            
+            const isLight = ['github', 'atom-one-light', 'vs'].includes(theme);
+            
+            if (isLight) {
+                els.windowFrame.style.background = '#e1e4e8';
+                els.windowFrame.style.borderBottom = '1px solid #d1d5da';
+                els.pdfContent.style.background = '#ffffff';
+                els.windowFrame.querySelector('.window-title').style.color = '#24292e';
+                els.container.style.color = '#24292e';
+            } else {
+                els.windowFrame.style.background = '#282c34';
+                els.windowFrame.style.borderBottom = '1px solid #1b1f23';
+                els.pdfContent.style.background = '#282c34'; 
+                els.windowFrame.querySelector('.window-title').style.color = '#9aa0a6';
+                els.container.style.color = '#abb2bf';
+            }
+
+            const mdBody = document.querySelector('.markdown-body');
+            if(mdBody) {
+                mdBody.style.color = isLight ? '#24292e' : '#abb2bf';
+                const preBlocks = document.querySelectorAll('.markdown-body pre');
+                preBlocks.forEach(p => {
+                    p.style.backgroundColor = isLight ? '#f6f8fa' : '#1e1e1e';
+                    p.style.border = isLight ? 'none' : '1px solid #444';
+                });
+            }
+        }
+
+        function updateUI() {
+            els.titleDisplay.textContent = els.titleInput.value;
+            document.title = els.titleInput.value; 
+
+            const fSize = els.fontSizeInput.value + 'px';
+            els.fontSizeVal.textContent = fSize;
+            
+            const lHeight = els.lineHeightInput.value;
+            els.lineHeightVal.textContent = lHeight;
+
+            if (currentMode === 'code') {
+                const lines = document.querySelectorAll('.line-wrapper code, .line-wrapper .line-num');
+                lines.forEach(el => {
+                    el.style.fontSize = fSize;
+                    el.style.lineHeight = lHeight;
+                });
+            } else {
+                const md = document.querySelector('.markdown-body');
+                if (md) md.style.fontSize = fSize;
+            }
+            
+            updateTheme();
+        }
+
+        // --- NEW: Mobile Toggle Functions ---
+        function toggleMenu() {
+            els.sidebar.classList.toggle('active');
+            els.overlay.classList.toggle('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateTheme();
+            renderContent();
+
+            // NEW: Add Event Listeners for Mobile Menu
+            if(els.menuBtn) {
+                els.menuBtn.addEventListener('click', toggleMenu);
+            }
+            if(els.overlay) {
+                els.overlay.addEventListener('click', toggleMenu);
+            }
+        });
+    </script>
+</body>
+</html>
