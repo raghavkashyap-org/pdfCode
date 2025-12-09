@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gateway Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gateway Portal Mobile</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #00f2ff;
             --secondary: #bd00ff;
             --bg-dark: #050505;
-            --card-bg: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.08);
+            --card-bg: rgba(20, 20, 25, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.1);
             --text: #ffffff;
         }
 
@@ -19,222 +19,217 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            cursor: none; /* Hide default cursor for custom one */
+            -webkit-tap-highlight-color: transparent; /* Removes blue overlay on mobile tap */
         }
 
         body {
             font-family: 'Outfit', sans-serif;
             background-color: var(--bg-dark);
             color: var(--text);
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            overflow-x: hidden;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            perspective: 1000px;
+            justify-content: center;
+            padding: 20px;
         }
 
         /* --- Animated Background --- */
         .ambient-bg {
-            position: absolute;
+            position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             z-index: -1;
             overflow: hidden;
-            background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #000000 100%);
+            background: #050505;
         }
 
         .orb {
             position: absolute;
             border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.6;
-            animation: float 20s infinite ease-in-out;
+            filter: blur(60px);
+            opacity: 0.5;
+            animation: float 10s infinite ease-in-out;
         }
 
         .orb-1 {
-            width: 400px; height: 400px;
+            width: 300px; height: 300px;
             background: var(--secondary);
-            top: -100px; left: -100px;
-            animation-delay: 0s;
+            top: -50px; left: -50px;
         }
 
         .orb-2 {
-            width: 500px; height: 500px;
+            width: 300px; height: 300px;
             background: var(--primary);
-            bottom: -150px; right: -150px;
-            animation-delay: -10s;
+            bottom: -50px; right: -50px;
+            animation-delay: -5s;
         }
 
         @keyframes float {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(50px, 50px) scale(1.1); }
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, 30px); }
         }
 
-        /* --- Main Content --- */
-        .container {
+        /* --- Header --- */
+        .header-content {
             text-align: center;
-            z-index: 10;
-            width: 90%;
-            max-width: 1200px;
+            margin-bottom: 40px;
+            margin-top: 20px;
+            z-index: 2;
         }
 
         h1 {
-            font-size: 4rem;
+            font-size: clamp(2.5rem, 8vw, 4rem);
             font-weight: 900;
-            margin-bottom: 10px;
-            background: linear-gradient(to right, #fff, #aaa);
+            line-height: 1.1;
+            background: linear-gradient(135deg, #fff 0%, #a5a5a5 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            letter-spacing: -2px;
+            margin-bottom: 10px;
             opacity: 0;
-            animation: fadeDown 1s forwards 0.5s;
+            animation: slideDown 0.8s forwards ease-out;
         }
 
         p.subtitle {
-            font-size: 1.2rem;
-            color: rgba(255,255,255,0.6);
-            margin-bottom: 60px;
+            font-size: 1rem;
+            color: rgba(255,255,255,0.7);
             font-weight: 300;
             opacity: 0;
-            animation: fadeUp 1s forwards 0.7s;
+            animation: fadeIn 1s forwards 0.5s;
         }
 
-        /* --- Split Cards Layout --- */
-        .split-layout {
+        /* --- Mobile Card Layout --- */
+        .card-container {
             display: flex;
-            justify-content: center;
-            gap: 40px;
-            padding: 20px;
+            flex-direction: column;
+            gap: 25px;
+            width: 100%;
+            max-width: 400px;
+            z-index: 2;
+            padding-bottom: 40px; /* Space for bottom scroll */
         }
 
         .card-link {
             text-decoration: none;
             color: inherit;
             display: block;
-            perspective: 1000px;
-            opacity: 0;
-            animation: fadeUp 1s forwards 1s;
-        }
-
-        .card-link:nth-child(2) {
-            animation-delay: 1.2s;
+            width: 100%;
         }
 
         .card {
-            width: 350px;
-            height: 450px;
             background: var(--card-bg);
             border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            padding: 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-radius: 20px;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 30px;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: transform 0.2s, box-shadow 0.3s, border-color 0.3s;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            
+            /* Initial State Animation */
+            opacity: 0;
+            transform: translateY(20px);
+            animation: cardEntrance 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
         }
 
-        /* Card Content */
-        .card-icon {
-            font-size: 4rem;
-            margin-bottom: 30px;
-            transition: transform 0.4s ease;
+        /* Staggered entrance for cards */
+        .card-link:nth-child(1) .card { animation-delay: 0.2s; }
+        .card-link:nth-child(2) .card { animation-delay: 0.4s; }
+
+        /* Mobile Touch Interaction (Active State) */
+        .card:active {
+            transform: scale(0.96) !important; /* Shrink effect on tap */
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* Card Visuals */
+        .card-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            z-index: 2;
+            position: relative;
+        }
+
+        .icon-box {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));
         }
 
         .card h2 {
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: 700;
-            margin-bottom: 15px;
-            transition: color 0.3s;
+            margin-bottom: 8px;
+            color: white;
         }
 
         .card p {
-            font-size: 1rem;
+            font-size: 0.9rem;
             color: rgba(255,255,255,0.6);
-            line-height: 1.6;
-            text-align: center;
+            line-height: 1.5;
+            margin-bottom: 20px;
         }
 
-        .card-btn {
-            margin-top: auto;
-            padding: 12px 30px;
-            border-radius: 50px;
-            background: transparent;
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            letter-spacing: 1px;
-            transition: all 0.3s;
-        }
-
-        /* --- Hover Effects --- */
-        /* Specific Styles for Card 1 (Blue) */
-        .card.option-1:hover {
-            box-shadow: 0 20px 50px rgba(0, 242, 255, 0.2);
-            border-color: var(--primary);
-        }
-        .card.option-1:hover .card-icon { transform: scale(1.2) rotate(-10deg); text-shadow: 0 0 20px var(--primary); }
-        .card.option-1:hover h2 { color: var(--primary); }
-        .card.option-1:hover .card-btn { background: var(--primary); color: #000; box-shadow: 0 0 20px var(--primary); border-color: var(--primary); }
-
-        /* Specific Styles for Card 2 (Purple) */
-        .card.option-2:hover {
-            box-shadow: 0 20px 50px rgba(189, 0, 255, 0.2);
-            border-color: var(--secondary);
-        }
-        .card.option-2:hover .card-icon { transform: scale(1.2) rotate(10deg); text-shadow: 0 0 20px var(--secondary); }
-        .card.option-2:hover h2 { color: var(--secondary); }
-        .card.option-2:hover .card-btn { background: var(--secondary); color: #fff; box-shadow: 0 0 20px var(--secondary); border-color: var(--secondary); }
-
-        /* --- Custom Cursor --- */
-        .cursor-dot,
-        .cursor-outline {
-            position: fixed;
-            top: 0;
-            left: 0;
-            transform: translate(-50%, -50%);
-            border-radius: 50%;
-            z-index: 9999;
-            pointer-events: none;
-        }
-
-        .cursor-dot {
-            width: 8px;
-            height: 8px;
-            background-color: white;
-        }
-
-        .cursor-outline {
+        .action-arrow {
             width: 40px;
             height: 40px;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            transition: width 0.2s, height 0.2s, background-color 0.2s;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: background 0.3s;
         }
 
-        body:hover .cursor-outline {
-            width: 40px;
+        /* Specific Theme Colors */
+        /* Card 1: Cyan Theme */
+        .card.theme-cyan {
+            border-top: 1px solid rgba(0, 242, 255, 0.3);
+        }
+        .card.theme-cyan h2 { color: var(--primary); }
+        .card.theme-cyan .action-arrow { color: var(--primary); border: 1px solid rgba(0, 242, 255, 0.2); }
+        
+        /* Persistent Glow Animation for Cyan */
+        .card.theme-cyan::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at top right, rgba(0, 242, 255, 0.15), transparent 60%);
+            opacity: 0.5;
+        }
+
+        /* Card 2: Purple Theme */
+        .card.theme-purple {
+            border-top: 1px solid rgba(189, 0, 255, 0.3);
+        }
+        .card.theme-purple h2 { color: var(--secondary); }
+        .card.theme-purple .action-arrow { color: var(--secondary); border: 1px solid rgba(189, 0, 255, 0.2); }
+
+        /* Persistent Glow Animation for Purple */
+        .card.theme-purple::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at top right, rgba(189, 0, 255, 0.15), transparent 60%);
+            opacity: 0.5;
         }
 
         /* Animations */
-        @keyframes fadeDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes cardEntrance { to { opacity: 1; transform: translateY(0); } }
 
-        /* Mobile Response */
-        @media (max-width: 768px) {
-            h1 { font-size: 2.5rem; }
-            .split-layout { flex-direction: column; align-items: center; }
-            .card { width: 100%; max-width: 320px; height: auto; min-height: 350px; }
-            .orb { opacity: 0.4; }
-            .cursor-dot, .cursor-outline { display: none; } /* Hide custom cursor on touch */
-            * { cursor: auto; }
+        /* Desktop Hover Overrides (Only apply if user has a mouse) */
+        @media (hover: hover) {
+            .card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            }
+            .card.theme-cyan:hover { border-color: var(--primary); box-shadow: 0 0 30px rgba(0, 242, 255, 0.2); }
+            .card.theme-purple:hover { border-color: var(--secondary); box-shadow: 0 0 30px rgba(189, 0, 255, 0.2); }
         }
+
     </style>
 </head>
 <body>
@@ -244,87 +239,50 @@
         <div class="orb orb-2"></div>
     </div>
 
-    <div class="cursor-dot"></div>
-    <div class="cursor-outline"></div>
+    <header class="header-content">
+        <h1>PORTAL</h1>
+        <p class="subtitle">Tap an option to proceed</p>
+    </header>
 
-    <div class="container">
-        <h1>CHOOSE YOUR PATH</h1>
-        <p class="subtitle">Select a destination to continue your journey</p>
-
-        <div class="split-layout">
-            <a href="converter.html" class="card-link">
-                <div class="card option-1" id="card1">
-                    <div class="card-icon">📄</div>
-                    <h2>Converter</h2>
-                    <p>Access the advanced Image to PDF tool. Compress, resize, and manage your documents with privacy.</p>
-                    <div class="card-btn">Launch Tool</div>
+    <div class="card-container">
+        
+        <a href="converter.html" class="card-link">
+            <div class="card theme-cyan">
+                <div class="card-content">
+                    <div class="icon-box">📄</div>
+                    <h2>PDF Tools</h2>
+                    <p>Image to PDF converter with compression and mobile formatting.</p>
+                    <div class="action-arrow">➜</div>
                 </div>
-            </a>
+            </div>
+        </a>
 
-            <a href="https://www.google.com" target="_blank" class="card-link">
-                <div class="card option-2" id="card2">
-                    <div class="card-icon">🚀</div>
+        <a href="https://www.google.com" target="_blank" class="card-link">
+            <div class="card theme-purple">
+                <div class="card-content">
+                    <div class="icon-box">✨</div>
                     <h2>Explore</h2>
-                    <p>Visit the external universe. Discover more resources, documentation, and external links.</p>
-                    <div class="card-btn">Go External</div>
+                    <p>Discover external resources, documentation, and more.</p>
+                    <div class="action-arrow">➜</div>
                 </div>
-            </a>
-        </div>
+            </div>
+        </a>
+
     </div>
 
     <script>
-        // --- 3D Tilt Effect Script ---
+        // Optional: Simple JS to add a "Ripple" effect coordinates on click for extra visual feedback
         const cards = document.querySelectorAll('.card');
 
         cards.forEach(card => {
-            card.addEventListener('mousemove', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-
-                const rotateX = ((y - centerY) / centerY) * -10; // Max rotation deg
-                const rotateY = ((x - centerX) / centerX) * 10;
-
-                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+            card.addEventListener('touchstart', function() {
+                this.style.transform = 'scale(0.96)';
             });
 
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
-            });
-        });
-
-        // --- Custom Cursor Script ---
-        const cursorDot = document.querySelector('.cursor-dot');
-        const cursorOutline = document.querySelector('.cursor-outline');
-
-        window.addEventListener('mousemove', (e) => {
-            const posX = e.clientX;
-            const posY = e.clientY;
-
-            // Dot follows instantly
-            cursorDot.style.left = `${posX}px`;
-            cursorDot.style.top = `${posY}px`;
-
-            // Outline follows with slight delay (animation via CSS transition)
-            cursorOutline.animate({
-                left: `${posX}px`,
-                top: `${posY}px`
-            }, { duration: 500, fill: "forwards" });
-        });
-
-        // Add hover effect to cursor when over links
-        const links = document.querySelectorAll('a');
-        links.forEach(link => {
-            link.addEventListener('mouseenter', () => {
-                cursorOutline.style.transform = 'translate(-50%, -50%) scale(1.5)';
-                cursorOutline.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-            });
-            link.addEventListener('mouseleave', () => {
-                cursorOutline.style.transform = 'translate(-50%, -50%) scale(1)';
-                cursorOutline.style.backgroundColor = 'transparent';
+            card.addEventListener('touchend', function() {
+                setTimeout(() => {
+                    this.style.transform = 'scale(1) translateY(0)';
+                }, 150);
             });
         });
     </script>
