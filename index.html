@@ -9,6 +9,7 @@
         :root {
             --primary: #00f2ff;
             --secondary: #bd00ff;
+            --accent: #ffae00; /* New Accent Color for Question Paper */
             --bg-dark: #050505;
             --card-bg: rgba(20, 20, 25, 0.6);
             --glass-border: rgba(255, 255, 255, 0.1);
@@ -19,7 +20,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent; /* Removes blue overlay on mobile tap */
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -52,18 +53,8 @@
             animation: float 10s infinite ease-in-out;
         }
 
-        .orb-1 {
-            width: 300px; height: 300px;
-            background: var(--secondary);
-            top: -50px; left: -50px;
-        }
-
-        .orb-2 {
-            width: 300px; height: 300px;
-            background: var(--primary);
-            bottom: -50px; right: -50px;
-            animation-delay: -5s;
-        }
+        .orb-1 { width: 300px; height: 300px; background: var(--secondary); top: -50px; left: -50px; }
+        .orb-2 { width: 300px; height: 300px; background: var(--primary); bottom: -50px; right: -50px; animation-delay: -5s; }
 
         @keyframes float {
             0%, 100% { transform: translate(0, 0); }
@@ -73,8 +64,8 @@
         /* --- Header --- */
         .header-content {
             text-align: center;
-            margin-bottom: 40px;
-            margin-top: 20px;
+            margin-bottom: 30px;
+            margin-top: 10px;
             z-index: 2;
         }
 
@@ -102,11 +93,11 @@
         .card-container {
             display: flex;
             flex-direction: column;
-            gap: 25px;
+            gap: 20px;
             width: 100%;
             max-width: 400px;
             z-index: 2;
-            padding-bottom: 40px; /* Space for bottom scroll */
+            padding-bottom: 40px;
         }
 
         .card-link {
@@ -122,29 +113,26 @@
             border-radius: 20px;
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
-            padding: 30px;
+            padding: 25px;
             position: relative;
             overflow: hidden;
             transition: transform 0.2s, box-shadow 0.3s, border-color 0.3s;
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-            
-            /* Initial State Animation */
             opacity: 0;
             transform: translateY(20px);
             animation: cardEntrance 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
         }
 
-        /* Staggered entrance for cards */
+        /* Staggered entrance */
         .card-link:nth-child(1) .card { animation-delay: 0.2s; }
         .card-link:nth-child(2) .card { animation-delay: 0.4s; }
+        .card-link:nth-child(3) .card { animation-delay: 0.6s; }
 
-        /* Mobile Touch Interaction (Active State) */
         .card:active {
-            transform: scale(0.96) !important; /* Shrink effect on tap */
+            transform: scale(0.96) !important;
             background: rgba(255, 255, 255, 0.08);
         }
 
-        /* Card Visuals */
         .card-content {
             display: flex;
             flex-direction: column;
@@ -155,81 +143,48 @@
         }
 
         .icon-box {
-            font-size: 3rem;
-            margin-bottom: 15px;
+            font-size: 2.5rem;
+            margin-bottom: 12px;
             filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));
         }
 
-        .card h2 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: white;
-        }
-
-        .card p {
-            font-size: 0.9rem;
-            color: rgba(255,255,255,0.6);
-            line-height: 1.5;
-            margin-bottom: 20px;
-        }
+        .card h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; color: white; }
+        .card p { font-size: 0.85rem; color: rgba(255,255,255,0.6); line-height: 1.4; margin-bottom: 15px; }
 
         .action-arrow {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+            width: 36px; height: 36px; border-radius: 50%;
             background: rgba(255,255,255,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            transition: background 0.3s;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; transition: background 0.3s;
         }
 
-        /* Specific Theme Colors */
-        /* Card 1: Cyan Theme */
-        .card.theme-cyan {
-            border-top: 1px solid rgba(0, 242, 255, 0.3);
-        }
+        /* Theme Styling */
+        .card.theme-cyan { border-top: 1px solid rgba(0, 242, 255, 0.3); }
         .card.theme-cyan h2 { color: var(--primary); }
         .card.theme-cyan .action-arrow { color: var(--primary); border: 1px solid rgba(0, 242, 255, 0.2); }
-        
-        /* Persistent Glow Animation for Cyan */
-        .card.theme-cyan::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at top right, rgba(0, 242, 255, 0.15), transparent 60%);
-            opacity: 0.5;
-        }
+        .card.theme-cyan::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at top right, rgba(0, 242, 255, 0.15), transparent 60%); opacity: 0.5; }
 
-        /* Card 2: Purple Theme */
-        .card.theme-purple {
-            border-top: 1px solid rgba(189, 0, 255, 0.3);
-        }
+        .card.theme-purple { border-top: 1px solid rgba(189, 0, 255, 0.3); }
         .card.theme-purple h2 { color: var(--secondary); }
         .card.theme-purple .action-arrow { color: var(--secondary); border: 1px solid rgba(189, 0, 255, 0.2); }
+        .card.theme-purple::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at top right, rgba(189, 0, 255, 0.15), transparent 60%); opacity: 0.5; }
 
-        /* Persistent Glow Animation for Purple */
-        .card.theme-purple::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at top right, rgba(189, 0, 255, 0.15), transparent 60%);
-            opacity: 0.5;
-        }
+        /* New Amber Theme for Question Paper */
+        .card.theme-amber { border-top: 1px solid rgba(255, 174, 0, 0.3); }
+        .card.theme-amber h2 { color: var(--accent); }
+        .card.theme-amber .action-arrow { color: var(--accent); border: 1px solid rgba(255, 174, 0, 0.2); }
+        .card.theme-amber::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at top right, rgba(255, 174, 0, 0.15), transparent 60%); opacity: 0.5; }
 
-        /* Animations */
         @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes fadeIn { to { opacity: 1; } }
         @keyframes cardEntrance { to { opacity: 1; transform: translateY(0); } }
 
-        /* Desktop Hover Overrides (Only apply if user has a mouse) */
         @media (hover: hover) {
-            .card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-            }
+            .card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.6); }
             .card.theme-cyan:hover { border-color: var(--primary); box-shadow: 0 0 30px rgba(0, 242, 255, 0.2); }
             .card.theme-purple:hover { border-color: var(--secondary); box-shadow: 0 0 30px rgba(189, 0, 255, 0.2); }
+            .card.theme-amber:hover { border-color: var(--accent); box-shadow: 0 0 30px rgba(255, 174, 0, 0.2); }
         }
-
     </style>
 </head>
 <body>
@@ -262,7 +217,18 @@
                 <div class="card-content">
                     <div class="icon-box">✨</div>
                     <h2>Code2PDF</h2>
-                    <p>Convert Code and Markdown to PDF .</p>
+                    <p>Convert Code and Markdown to professional PDF documents.</p>
+                    <div class="action-arrow">➜</div>
+                </div>
+            </div>
+        </a>
+
+        <a href="#" class="card-link">
+            <div class="card theme-amber">
+                <div class="card-content">
+                    <div class="icon-box">📝</div>
+                    <h2>Question Paper</h2>
+                    <p>Generate customized examination papers and assessments.</p>
                     <div class="action-arrow">➜</div>
                 </div>
             </div>
@@ -271,14 +237,11 @@
     </div>
 
     <script>
-        // Optional: Simple JS to add a "Ripple" effect coordinates on click for extra visual feedback
         const cards = document.querySelectorAll('.card');
-
         cards.forEach(card => {
             card.addEventListener('touchstart', function() {
                 this.style.transform = 'scale(0.96)';
             });
-
             card.addEventListener('touchend', function() {
                 setTimeout(() => {
                     this.style.transform = 'scale(1) translateY(0)';
