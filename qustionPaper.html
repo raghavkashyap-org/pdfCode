@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProPaper Gen - Professional Exam Creator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Times+New+Roman&display=swap" rel="stylesheet">
+    <style>
+        :root { --p-mt: 15mm; --p-mb: 20mm; --p-ml: 15mm; --p-mr: 15mm; }
+        body { background: #0f172a; color: #f1f5f9; font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
+        
+        /* Editor Dashboard - Enhanced UX */
+        .sidebar { background: #111827; border-right: 1px solid #1f2937; width: 480px; display: flex; flex-direction: column; }
+        .editor-section { background: #1e293b; border-radius: 10px; padding: 15px; margin-bottom: 15px; border: 1px solid #334155; position: relative; }
+        .block-card { background: #0f172a; border-left: 4px solid #6366f1; border-radius: 6px; padding: 12px; margin-top: 10px; }
+        .input-ui { background: #1e293b; border: 1px solid #475569; border-radius: 5px; padding: 8px; font-size: 13px; color: white; width: 100%; }
+        .input-ui:focus { border-color: #818cf8; outline: none; }
+        
+        /* Multi-Page Preview Logic */
+        .preview-pane { flex: 1; background: #334155; overflow-y: auto; padding: 40px; display: flex; flex-direction: column; align-items: center; gap: 30px; }
+        .a4-page { 
+            width: 210mm; min-height: 297mm; background: white; color: black; padding: var(--p-mt) var(--p-mr) var(--p-mb) var(--p-ml);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.6); font-family: 'Times New Roman', Times, serif; position: relative; box-sizing: border-box;
+        }
+
+        /* Question Paper Styles */
+        .question-block { break-inside: avoid; page-break-inside: avoid; margin-bottom: 25px; }
+        table { width: 100%; border-collapse: collapse; border: 1.5px solid black; }
+        th, td { border: 1px solid black; padding: 6px 10px; font-size: 14.5px; vertical-align: top; }
+        .roll-box { width: 22px; height: 26px; border: 1px solid black; display: inline-block; margin-left: -1px; }
+
+        /* FIX: Clean PDF Download without headers/footers */
+        @media print {
+            @page { 
+                margin: 0; /* Removes browser-added URL, date, and page title */
+                size: A4;
+            }
+            body { 
+                background: white !important; 
+                color: black !important;
+                overflow: visible !important; 
+                margin: 0 !important; 
+                padding: 0 !important;
+            }
+            .no-print { display: none !important; }
+            .preview-pane { 
+                padding: 0 !important; 
+                background: white !important; 
+                height: auto !important; 
+                display: block !important; 
+                overflow: visible !important;
+            }
+            .a4-page { 
+                box-shadow: none !important; 
+                margin: 0 !important; 
+                width: 210mm !important; 
+                min-height: 297mm !important; 
+                border: none !important; 
+                page-break-after: always;
+                /* Internal padding (the margins user set) remain intact */
+            }
+        }
+    </style>
+</head>
+<body class="flex">
+
+    <aside class="sidebar h-full p-6 no-print">
+        <div class="mb-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-black text-indigo-400">PAPERGEN PRO</h1>
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Enhanced Editor v5.0</p>
+            </div>
+            <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 p-2 rounded-lg text-xs font-bold transition">Clean PDF Download</button>
+        </div>
+
+        <div class="editor-section">
+            <h3 class="text-xs font-bold text-slate-400 uppercase mb-3">Layout Margins (mm)</h3>
+            <div class="grid grid-cols-4 gap-2">
+                <input type="number" value="15" class="input-ui text-center !p-1" title="Top" oninput="updateMargin('mt', this.value)">
+                <input type="number" value="20" class="input-ui text-center !p-1" title="Bottom" oninput="updateMargin('mb', this.value)">
+                <input type="number" value="15" class="input-ui text-center !p-1" title="Left" oninput="updateMargin('ml', this.value)">
+                <input type="number" value="15" class="input-ui text-center !p-1" title="Right" oninput="updateMargin('mr', this.value)">
+            </div>
+        </div>
+
+        <div class="editor-section space-y-2">
+            <input id="in-id" class="input-ui" value="310120" placeholder="Paper ID" oninput="sync()">
+            <input id="in-code" class="input-ui" value="BCS501" placeholder="Subject Code" oninput="sync()">
+            <input id="in-degree" class="input-ui" value="BTECH" placeholder="Degree" oninput="sync()">
+            <input id="in-session" class="input-ui" value="(SEM V) THEORY EXAMINATION 2024-25" placeholder="Session" oninput="sync()">
+            <input id="in-title" class="input-ui" value="DATABASE MANAGEMENT SYSTEM" placeholder="Subject Title" oninput="sync()">
+        </div>
+
+        <div id="section-builder-root" class="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4"></div>
+
+        <button onclick="addSection()" class="w-full py-3 bg-white/5 border border-dashed border-slate-700 text-slate-400 rounded-lg hover:bg-white/10 hover:text-white transition mt-4 shrink-0">
+            + New Section (e.g. Section C)
+        </button>
+
+        <button onclick="downloadHTML()" class="w-full bg-emerald-600 hover:bg-emerald-700 py-4 rounded-xl font-bold text-lg shadow-lg mt-4 shrink-0">
+            Download Student HTML
+        </button>
+    </aside>
+
+    <main class="preview-pane">
+        <div class="a4-page" id="paper-main">
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    <svg id="barcode-main"></svg>
+                    <div class="text-[11px] font-bold mt-1">PAPER ID: <span id="out-id"></span></div>
+                </div>
+                <div class="text-right">
+                    <div class="text-[12px] italic">Printed Page: 1 of 1</div>
+                    <div class="text-sm font-bold">Subject Code: <span id="out-code"></span></div>
+                </div>
+            </div>
+
+            <div class="flex justify-end items-center gap-2 mb-4">
+                <span class="text-sm font-bold">Roll No:</span>
+                <div class="flex" id="roll-grid"></div>
+            </div>
+
+            <div class="text-center font-bold uppercase mb-4 leading-tight">
+                <div class="text-[16px]" id="out-degree"></div>
+                <div class="text-[16px]" id="out-session"></div>
+                <div class="text-[18px] mt-1" id="out-title"></div>
+            </div>
+
+            <div class="flex justify-between border-b-2 border-black font-bold pb-1 text-sm mb-2">
+                <span>TIME: 3 HRS</span>
+                <span>M.MARKS: 70</span>
+            </div>
+
+            <div class="text-[13px] italic mb-6">Note: Attempt all Sections. In case of any missing data; choose suitably.</div>
+
+            <div id="content-render-target"></div>
+            
+            <div class="absolute bottom-8 right-10 text-[12px] italic">1 | P a g e</div>
+        </div>
+    </main>
+
+    <script>
+        let paperData = [
+            {
+                title: "SECTION C",
+                blocks: [{
+                    num: "3", instr: "Attempt any one part of the following:", marks: "07 x 1 = 07",
+                    subs: [{ q: "Illustrate the concept of data independence...", co: "1", lvl: "K4" }]
+                }]
+            }
+        ];
+
+        function sync() {
+            const pId = document.getElementById('in-id').value;
+            document.getElementById('out-id').innerText = pId;
+            document.getElementById('out-code').innerText = document.getElementById('in-code').value;
+            document.getElementById('out-degree').innerText = document.getElementById('in-degree').value;
+            document.getElementById('out-session').innerText = document.getElementById('in-session').value;
+            document.getElementById('out-title').innerText = document.getElementById('in-title').value;
+            
+            JsBarcode("#barcode-main", pId, { height: 35, width: 1.5, displayValue: false });
+            document.getElementById('roll-grid').innerHTML = Array(10).fill('<div class="roll-box"></div>').join('');
+            
+            renderEditor();
+            renderPaper();
+        }
+
+        function renderEditor() {
+            const root = document.getElementById('section-builder-root');
+            root.innerHTML = paperData.map((sec, sIdx) => `
+                <div class="editor-section">
+                    <div class="flex justify-between mb-2">
+                        <input class="font-bold text-indigo-400 bg-transparent uppercase" value="${sec.title}" oninput="paperData[${sIdx}].title=this.value; renderPaper()">
+                        <button onclick="paperData.splice(${sIdx},1); sync()" class="text-red-400 text-[10px] hover:underline">Remove Section</button>
+                    </div>
+                    ${sec.blocks.map((b, bIdx) => `
+                        <div class="block-card">
+                            <div class="grid grid-cols-4 gap-2 mb-2">
+                                <input class="input-ui text-center text-xs" placeholder="Q#" value="${b.num}" oninput="paperData[${sIdx}].blocks[${bIdx}].num=this.value; renderPaper()">
+                                <input class="input-ui col-span-2 text-xs" placeholder="Instruction" value="${b.instr}" oninput="paperData[${sIdx}].blocks[${bIdx}].instr=this.value; renderPaper()">
+                                <input class="input-ui text-right text-xs" placeholder="Marks" value="${b.marks}" oninput="paperData[${sIdx}].blocks[${bIdx}].marks=this.value; renderPaper()">
+                            </div>
+                            <div class="space-y-2">
+                                ${b.subs.map((sub, qIdx) => `
+                                    <div class="flex gap-2 items-start">
+                                        <textarea class="input-ui text-[11px] flex-1 h-12" placeholder="Question Text" oninput="paperData[${sIdx}].blocks[${bIdx}].subs[${qIdx}].q=this.value; renderPaper()">${sub.q}</textarea>
+                                        <div class="flex flex-col gap-1">
+                                            <input class="input-ui w-8 !p-1 text-[10px] text-center" placeholder="CO" value="${sub.co}" oninput="paperData[${sIdx}].blocks[${bIdx}].subs[${qIdx}].co=this.value; renderPaper()">
+                                            <input class="input-ui w-8 !p-1 text-[10px] text-center" placeholder="Level" value="${sub.lvl}" oninput="paperData[${sIdx}].blocks[${bIdx}].subs[${qIdx}].lvl=this.value; renderPaper()">
+                                        </div>
+                                        <button onclick="paperData[${sIdx}].blocks[${bIdx}].subs.splice(${qIdx},1); sync()" class="text-slate-500 hover:text-red-400">✕</button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <button onclick="paperData[${sIdx}].blocks[${bIdx}].subs.push({q:'',co:'',lvl:''}); sync()" class="mt-2 text-[10px] text-indigo-400 font-bold">+ SUB-QUESTION</button>
+                        </div>
+                    `).join('')}
+                    <button onclick="paperData[${sIdx}].blocks.push({num:'1', instr:'', marks:'', subs:[]}); sync()" class="mt-3 w-full py-1 text-[9px] bg-white/5 rounded border border-slate-700 text-slate-400 hover:text-white uppercase">+ Add Question Block</button>
+                </div>
+            `).join('');
+        }
+
+        function renderPaper() {
+            const target = document.getElementById('content-render-target');
+            target.innerHTML = paperData.map(sec => `
+                <div class="mt-4">
+                    <div class="text-center font-bold underline text-sm mb-2 uppercase">${sec.title}</div>
+                    ${sec.blocks.map(b => `
+                        <div class="question-block">
+                            <div class="flex justify-between font-bold text-[14px] mb-1">
+                                <span>${b.num}. ${b.instr}</span>
+                                <span>${b.marks}</span>
+                            </div>
+                            <table>
+                                <thead><tr><th style="width:8%">Q no.</th><th style="width:72%">Question</th><th style="width:10%">CO</th><th style="width:10%">Level</th></tr></thead>
+                                <tbody>
+                                    ${b.subs.map((s, i) => `<tr>
+                                        <td class="text-center">${String.fromCharCode(97+i)}.</td>
+                                        <td style="white-space:pre-wrap;">${s.q}</td>
+                                        <td class="text-center">${s.co}</td>
+                                        <td class="text-center">${s.lvl}</td>
+                                    </tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('');
+        }
+
+        function updateMargin(t, v) { document.documentElement.style.setProperty(`--p-${t}`, v + 'mm'); }
+        function addSection() { paperData.push({ title: "SECTION NAME", blocks: [] }); sync(); }
+
+        function downloadHTML() {
+            const pId = document.getElementById('in-id').value;
+            const content = document.getElementById('paper-main').innerHTML;
+            const timerVal = prompt("Enter Exam Timer (minutes):", "180");
+            
+            const doc = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"><title>Exam Paper - ${pId}</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
+    <link href="https://fonts.googleapis.com/css2?family=Times+New+Roman&display=swap" rel="stylesheet">
+    <style>
+        body { background: #f8fafc; margin: 0; padding: 40px 0; display: flex; flex-direction: column; align-items: center; font-family: 'Times New Roman', serif; }
+        .page-wrap { transform-origin: top center; transition: transform 0.3s ease; }
+        .a4-page { width: 210mm; min-height: 297mm; background: white; padding: 15mm; box-sizing: border-box; box-shadow: 0 0 40px rgba(0,0,0,0.1); position: relative; }
+        .question-block { margin-bottom: 25px; page-break-inside: avoid; }
+        table { width: 100%; border-collapse: collapse; border: 1.5px solid black; }
+        th, td { border: 1px solid black; padding: 8px 10px; font-size: 14.5px; vertical-align: top; }
+        .roll-box { width: 22px; height: 26px; border: 1px solid black; display: inline-block; margin-left: -1px; }
+        
+        /* Widgets */
+        .widget { position: fixed; bottom: 30px; background: #0f172a; color: white; padding: 15px; border-radius: 12px; width: 180px; text-align: center; font-family: sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .timer-l { left: 30px; border-left: 4px solid #ef4444; }
+        .sw-r { right: 30px; border-right: 4px solid #10b981; }
+        .w-t { font-size: 24px; font-weight: bold; font-family: monospace; margin: 8px 0; }
+        .zoom-ctrl { position: fixed; top: 30px; right: 30px; background: #1e293b; padding: 12px; border-radius: 10px; display: flex; flex-direction: column; gap: 8px; z-index: 9999; transition: opacity 0.5s; }
+        .btn-act { background: #6366f1; border: none; color: white; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        #restore-ui { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; border: 1px solid #334155; padding: 5px 15px; border-radius: 20px; color: #94a3b8; font-size: 10px; cursor: pointer; display: none; }
+        @media print { 
+            @page { margin: 0; }
+            .widget, .zoom-ctrl, #restore-ui { display: none !important; } 
+            body { padding: 0; background: white; } 
+            .a4-page { box-shadow: none; } 
+        }
+    </style>
+</head>
+<body>
+    <button id="restore-ui" onclick="showUI()">Click to Show Controls</button>
+    <div class="zoom-ctrl" id="main-ui">
+        <div style="font-size:10px; color:#94a3b8; text-transform:uppercase; font-weight:bold;">View Control</div>
+        <button class="btn-act" onclick="zoom('in')">Zoom In (+)</button>
+        <button class="btn-act" onclick="zoom('out')">Zoom Out (-)</button>
+        <div id="ui-timer" style="font-size:9px; color:#ef4444; margin-top:5px; text-align:center;">Fading in 60s</div>
+    </div>
+
+    <div class="page-wrap" id="scaler"><div class="a4-page">${content}</div></div>
+
+    <div class="widget timer-l">
+        <div style="font-size:10px; opacity:0.6; text-transform:uppercase;">Exam Countdown</div>
+        <div id="exam-t" class="w-t">00:00:00</div>
+    </div>
+
+    <div class="widget sw-r">
+        <div style="font-size:10px; opacity:0.6; text-transform:uppercase;">Student Stopwatch</div>
+        <div id="sw-t" class="w-t">00:00:00</div>
+        <button class="btn-act" onclick="toggleSW()" id="sw-btn" style="width:100%">Start</button>
+    </div>
+
+    <script>
+        let scale = 1;
+        function zoom(d) { scale += (d==='in'?0.1:-0.1); document.getElementById('scaler').style.transform = "scale("+scale+")"; }
+
+        // Smart UI Logic
+        let fadeTimer;
+        function showUI() {
+            clearTimeout(fadeTimer);
+            const ui = document.getElementById('main-ui');
+            const restore = document.getElementById('restore-ui');
+            ui.style.display = 'flex';
+            ui.style.opacity = '1';
+            restore.style.display = 'none';
+            
+            let timeLeft = 60;
+            const ticker = setInterval(() => {
+                timeLeft--;
+                document.getElementById('ui-timer').innerText = "Fading in " + timeLeft + "s";
+                if(timeLeft <= 0) {
+                    clearInterval(ticker);
+                    ui.style.opacity = '0';
+                    setTimeout(() => { 
+                        ui.style.display = 'none'; 
+                        restore.style.display = 'block';
+                    }, 500);
+                }
+            }, 1000);
+        }
+
+        // Exam Timer
+        let examSec = ${timerVal} * 60;
+        setInterval(() => {
+            if(examSec > 0) {
+                examSec--;
+                updateDisp('exam-t', examSec);
+            } else {
+                document.getElementById('exam-t').innerText = "TIME UP";
+                document.getElementById('exam-t').parentElement.style.background = "#000";
+            }
+        }, 1000);
+
+        // Stopwatch
+        let sSec = 0, swActive = false, swInt;
+        function toggleSW() {
+            if(swActive) { clearInterval(swInt); swActive=false; document.getElementById('sw-btn').innerText='Start'; }
+            else { swActive=true; document.getElementById('sw-btn').innerText='Stop'; swInt=setInterval(()=>{sSec++; updateDisp('sw-t',sSec);}, 1000); }
+        }
+
+        function updateDisp(id,s) {
+            let h=Math.floor(s/3600).toString().padStart(2,'0');
+            let m=Math.floor((s%3600)/60).toString().padStart(2,'0');
+            let sc=(s%60).toString().padStart(2,'0');
+            document.getElementById(id).innerText = h+":"+m+":"+sc;
+        }
+
+        window.onload = () => {
+            JsBarcode("#barcode-main", "${pId}", {height:35, width:1.5, displayValue:false});
+            showUI();
+        };
+    <\/script>
+</body>
+</html>`;
+            const blob = new Blob([doc], {type:'text/html'});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `ExamPaper_${pId}.html`;
+            link.click();
+        }
+
+        window.onload = sync;
+    </script>
+</body>
+</html>
