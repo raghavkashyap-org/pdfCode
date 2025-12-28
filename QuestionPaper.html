@@ -288,10 +288,13 @@
     </div>
 
     <div class="widget sw-r">
-        <div style="font-size:10px; opacity:0.6; text-transform:uppercase;">Student Stopwatch</div>
-        <div id="sw-t" class="w-t">00:00:00</div>
-        <button class="btn-act" onclick="toggleSW()" id="sw-btn" style="width:100%">Start</button>
+    <div style="font-size:10px; opacity:0.6; text-transform:uppercase;">Student Stopwatch</div>
+    <div id="sw-t" class="w-t">00:00:00</div>
+    <div class="flex gap-1">
+        <button class="btn-act" onclick="toggleSW()" id="sw-btn" style="flex:2">Start</button>
+        <button class="btn-act" onclick="resetSW()" style="flex:1; background:#475569">Reset</button>
     </div>
+</div>
 
     <script>
         let scale = 1;
@@ -334,12 +337,32 @@
             }
         }, 1000);
 
-        // Stopwatch
-        let sSec = 0, swActive = false, swInt;
-        function toggleSW() {
-            if(swActive) { clearInterval(swInt); swActive=false; document.getElementById('sw-btn').innerText='Start'; }
-            else { swActive=true; document.getElementById('sw-btn').innerText='Stop'; swInt=setInterval(()=>{sSec++; updateDisp('sw-t',sSec);}, 1000); }
-        }
+       // Stopwatch Logic
+let sSec = 0, swActive = false, swInt;
+function toggleSW() {
+    const btn = document.getElementById('sw-btn');
+    if(swActive) { 
+        clearInterval(swInt); 
+        swActive = false; 
+        btn.innerText = 'Resume'; 
+        btn.style.background = "#6366f1";
+    } else { 
+        swActive = true; 
+        btn.innerText = 'Stop'; 
+        btn.style.background = "#ef4444";
+        swInt = setInterval(() => { sSec++; updateDisp('sw-t', sSec); }, 1000); 
+    }
+}
+
+function resetSW() {
+    clearInterval(swInt);
+    swActive = false;
+    sSec = 0;
+    updateDisp('sw-t', 0);
+    const btn = document.getElementById('sw-btn');
+    btn.innerText = 'Start';
+    btn.style.background = "#6366f1";
+}
 
         function updateDisp(id,s) {
             let h=Math.floor(s/3600).toString().padStart(2,'0');
