@@ -9,7 +9,8 @@
         :root {
             --primary: #00f2ff;
             --secondary: #bd00ff;
-            --accent: #ffae00; /* New Accent Color for Question Paper */
+            --accent: #ffae00;
+            --emerald: #00ff88; /* New Color for ZIP Ingest */
             --bg-dark: #050505;
             --card-bg: rgba(20, 20, 25, 0.6);
             --glass-border: rgba(255, 255, 255, 0.1);
@@ -49,7 +50,7 @@
             position: absolute;
             border-radius: 50%;
             filter: blur(60px);
-            opacity: 0.5;
+            opacity: 0.4;
             animation: float 10s infinite ease-in-out;
         }
 
@@ -93,7 +94,7 @@
         .card-container {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
             width: 100%;
             max-width: 400px;
             z-index: 2;
@@ -113,7 +114,7 @@
             border-radius: 20px;
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
-            padding: 25px;
+            padding: 20px;
             position: relative;
             overflow: hidden;
             transition: transform 0.2s, box-shadow 0.3s, border-color 0.3s;
@@ -124,9 +125,10 @@
         }
 
         /* Staggered entrance */
-        .card-link:nth-child(1) .card { animation-delay: 0.2s; }
-        .card-link:nth-child(2) .card { animation-delay: 0.4s; }
-        .card-link:nth-child(3) .card { animation-delay: 0.6s; }
+        .card-link:nth-child(1) .card { animation-delay: 0.1s; }
+        .card-link:nth-child(2) .card { animation-delay: 0.2s; }
+        .card-link:nth-child(3) .card { animation-delay: 0.3s; }
+        .card-link:nth-child(4) .card { animation-delay: 0.4s; }
 
         .card:active {
             transform: scale(0.96) !important;
@@ -143,22 +145,22 @@
         }
 
         .icon-box {
-            font-size: 2.5rem;
-            margin-bottom: 12px;
-            filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
         }
 
-        .card h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; color: white; }
-        .card p { font-size: 0.85rem; color: rgba(255,255,255,0.6); line-height: 1.4; margin-bottom: 15px; }
+        .card h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 4px; color: white; }
+        .card p { font-size: 0.85rem; color: rgba(255,255,255,0.6); line-height: 1.4; margin-bottom: 12px; }
 
         .action-arrow {
-            width: 36px; height: 36px; border-radius: 50%;
-            background: rgba(255,255,255,0.1);
+            width: 32px; height: 32px; border-radius: 50%;
+            background: rgba(255,255,255,0.05);
             display: flex; align-items: center; justify-content: center;
-            font-size: 1rem; transition: background 0.3s;
+            font-size: 0.9rem; transition: background 0.3s;
         }
 
-        /* Theme Styling */
+        /* --- Theme Styling --- */
         .card.theme-cyan { border-top: 1px solid rgba(0, 242, 255, 0.3); }
         .card.theme-cyan h2 { color: var(--primary); }
         .card.theme-cyan .action-arrow { color: var(--primary); border: 1px solid rgba(0, 242, 255, 0.2); }
@@ -169,11 +171,16 @@
         .card.theme-purple .action-arrow { color: var(--secondary); border: 1px solid rgba(189, 0, 255, 0.2); }
         .card.theme-purple::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at top right, rgba(189, 0, 255, 0.15), transparent 60%); opacity: 0.5; }
 
-        /* New Amber Theme for Question Paper */
         .card.theme-amber { border-top: 1px solid rgba(255, 174, 0, 0.3); }
         .card.theme-amber h2 { color: var(--accent); }
         .card.theme-amber .action-arrow { color: var(--accent); border: 1px solid rgba(255, 174, 0, 0.2); }
         .card.theme-amber::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at top right, rgba(255, 174, 0, 0.15), transparent 60%); opacity: 0.5; }
+
+        /* New Emerald Theme for ZIP Ingest */
+        .card.theme-emerald { border-top: 1px solid rgba(0, 255, 136, 0.3); }
+        .card.theme-emerald h2 { color: var(--emerald); }
+        .card.theme-emerald .action-arrow { color: var(--emerald); border: 1px solid rgba(0, 255, 136, 0.2); }
+        .card.theme-emerald::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at top right, rgba(0, 255, 136, 0.15), transparent 60%); opacity: 0.5; }
 
         @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes fadeIn { to { opacity: 1; } }
@@ -181,9 +188,10 @@
 
         @media (hover: hover) {
             .card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.6); }
-            .card.theme-cyan:hover { border-color: var(--primary); box-shadow: 0 0 30px rgba(0, 242, 255, 0.2); }
-            .card.theme-purple:hover { border-color: var(--secondary); box-shadow: 0 0 30px rgba(189, 0, 255, 0.2); }
-            .card.theme-amber:hover { border-color: var(--accent); box-shadow: 0 0 30px rgba(255, 174, 0, 0.2); }
+            .card.theme-cyan:hover { border-color: var(--primary); }
+            .card.theme-purple:hover { border-color: var(--secondary); }
+            .card.theme-amber:hover { border-color: var(--accent); }
+            .card.theme-emerald:hover { border-color: var(--emerald); }
         }
     </style>
 </head>
@@ -196,7 +204,7 @@
 
     <header class="header-content">
         <h1>PORTAL</h1>
-        <p class="subtitle">Tap an option to proceed</p>
+        <p class="subtitle">Select a tool to proceed</p>
     </header>
 
     <div class="card-container">
@@ -206,7 +214,7 @@
                 <div class="card-content">
                     <div class="icon-box">📄</div>
                     <h2>PDF Tools</h2>
-                    <p>Image to PDF converter with compression and mobile formatting.</p>
+                    <p>Compress and convert images to PDF with mobile formatting.</p>
                     <div class="action-arrow">➜</div>
                 </div>
             </div>
@@ -217,7 +225,7 @@
                 <div class="card-content">
                     <div class="icon-box">✨</div>
                     <h2>Code2PDF</h2>
-                    <p>Convert Code and Markdown to professional PDF documents.</p>
+                    <p>Convert Code and Markdown into professional documents.</p>
                     <div class="action-arrow">➜</div>
                 </div>
             </div>
@@ -229,6 +237,17 @@
                     <div class="icon-box">📝</div>
                     <h2>Question Paper</h2>
                     <p>Generate customized examination papers and assessments.</p>
+                    <div class="action-arrow">➜</div>
+                </div>
+            </div>
+        </a>
+
+        <a href="https://change2pdf.netlify.app/zipingest" class="card-link">
+            <div class="card theme-emerald">
+                <div class="card-content">
+                    <div class="icon-box">📦</div>
+                    <h2>ZIP Ingest</h2>
+                    <p>Bulk upload and process archive files for rapid ingestion.</p>
                     <div class="action-arrow">➜</div>
                 </div>
             </div>
