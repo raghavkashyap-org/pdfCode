@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZipIngest - Code to Prompt</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ZipIngest</h1>
+            <p>Convert your ZIP project into a single LLM-friendly text prompt.</p>
+        </header>
+
+        <main>
+            <div class="upload-section">
+                <input type="file" id="zipInput" accept=".zip" hidden>
+                <label for="zipInput" class="drop-zone" id="dropZone">
+                    <span>Click to upload or drag & drop ZIP file</span>
+                </label>
+            </div>
+
+            <div class="actions" id="actionArea" style="display: none;">
+                <button id="copyBtn" class="primary-btn">Copy to Clipboard</button>
+                <button id="downloadBtn" class="secondary-btn">Download .txt</button>
+            </div>
+
+            <div class="output-container">
+                <pre id="output">Output will appear here...</pre>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
